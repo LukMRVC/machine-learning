@@ -1,0 +1,10 @@
+.idea
+.vscode
+*.csv
+*.json
+*.TAG
+target/
+/target/**
+*target/
+*.dat
+.ipynb_checkpoints
