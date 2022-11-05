@@ -13,6 +13,7 @@ class Tree:
         self.gini = -1
         self.values = None
         self.gini_gain = None
+        self.majority_class = None
 
     def fit(self, ds, max_depth):
         self.values = ds
@@ -21,7 +22,8 @@ class Tree:
         # split classes from dataset
         classes = ds[:, -1].astype(dtype=int)
         ds_without_classes = ds[:, :-1]
-        self.gini_gain = round(gini_impurity(ds, classes), 3)
+        self.gini_gain, classes_counts = gini_impurity(ds, classes)
+        self.majority_class = max(classes_counts, key=classes_counts.get)
         if self.gini_gain <= 0 or self.depth > max_depth:
             return
         # call gini
@@ -39,15 +41,22 @@ class Tree:
 
         pass
 
-    def validate():
-        pass
+    def predict(self, record):
+        if record[self.split_attr] <= self.threshold:
+            if self.left is not None:
+                return self.left.predict(record)
+            return self.majority_class
+
+        if self.right is not None:
+            return self.right.predict(record)
+        return self.majority_class
 
 
 def gini_impurity(ds, classes):
     class_set = set(classes)
     counts = {cs: (ds[:, -1] == cs).sum() for cs in class_set}
     probs = {cs: probability(count, len(classes)) for cs, count in counts.items()}
-    return 1.0 - sum(probs.values())
+    return round(1.0 - sum(probs.values()), 3), counts
 
 
 def probability(count, total):
@@ -93,16 +102,12 @@ def best_gini_split(ds, classes):
     for attr_idx, attr_values in enumerate(ds.T):
         mi = min(attr_values)
         ma = max(attr_values)
-        # mi += 0.05
-        # ma -= 0.05
-        # print(mi, "\t", ma)
         gini_values = []
 
         for thold in np.arange(mi, ma, 0.05):
             gini_value = gini_split(attr_values, classes, thold)
             gini_values.append((round(gini_value, 4), round(thold, 4)))
 
-        # print(attr_idx, gini_values)
         # the attributes values are so close together
         if not gini_values:
             # append gini for Minimum value and minimum value
@@ -111,7 +116,6 @@ def best_gini_split(ds, classes):
         min_gini, min_thold = min(gini_values)
         best_attr_split.append((min_gini, min_thold, attr_idx))
 
-    print(best_attr_split)
     min_gini, min_thold, best_split = min(best_attr_split)
 
     for g, t, s in best_attr_split:
@@ -135,6 +139,9 @@ if __name__ == "__main__":
     root = Tree()
     root.fit(ds, 4)
 
+    definetely_some_class = [6.35, 2.7, 4.8, 1.75]
+    predicted = root.predict(definetely_some_class)
+    print(f"Predicted Iris: {predicted}")
     # print(ds.T)
 
     # tr = Tree()
