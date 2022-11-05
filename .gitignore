@@ -8,3 +8,7 @@ target/
 *target/
 *.dat
 .ipynb_checkpoints
+
+venv
+.venv
+*.swp
